@@ -1,3 +1,6 @@
+import 'dart:convert';
+
+import 'package:chat/chats.dart';
 import 'package:flutter/material.dart';
 import 'package:web_socket_channel/io.dart';
 
@@ -33,12 +36,13 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   final TextEditingController _controller = TextEditingController();
   final _channel = IOWebSocketChannel.connect(
-    Uri.parse('wss://echo.websocket.org'),
-    headers: {"Authorization": "Bearer somelongshit"},
+    Uri.parse('wss://api.mahajodi.space/api/v1/chat/connect?user_id=181'),
     pingInterval: Duration(microseconds: 1),
   );
 
-  List<String> messages = [];
+  var _currentUserID = 181;
+
+  List<ChatsRequestResponse> messages = [];
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -61,13 +65,15 @@ class _MyHomePageState extends State<MyHomePage> {
               stream: _channel.stream,
               builder: (context, AsyncSnapshot snapshot) {
                 if (snapshot.hasData) {
-                  messages.add(snapshot.data);
-
+                  var encoded = json.decode(snapshot.data.toString());
+                  print(encoded);
+                  messages.add(ChatsRequestResponse.fromJson(encoded));
                   return ListView.builder(
                       shrinkWrap: true,
                       reverse: true,
                       itemCount: messages.length,
-                      itemBuilder: (context, index) => Text(messages[index]));
+                      itemBuilder: (context, index) =>
+                          _bubbleChat(messages[index]));
                 } else {
                   return Text("no data");
                 }
@@ -86,8 +92,35 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void _sendMessage() {
     if (_controller.text.isNotEmpty) {
-      _channel.sink.add(_controller.text);
+      _channel.sink.add(ChatsRequestResponse(
+              data: _controller.text, recipientId: 248, senderId: 181)
+          .toString());
     }
+  }
+
+  Widget _bubbleChat(ChatsRequestResponse message) {
+    return Container(
+      padding: EdgeInsets.all(18.0),
+      margin: EdgeInsets.all(18.0),
+      decoration: BoxDecoration(
+          color: _currentUserID == message.senderId
+              ? Colors.blue.shade700
+              : Colors.white,
+          boxShadow: <BoxShadow>[
+            BoxShadow(
+                blurRadius: 4.0,
+                color: Colors.black.withOpacity(.4),
+                offset: Offset(2, 5))
+          ],
+          borderRadius: BorderRadius.circular(18.0)),
+      child: Text(
+        message.data.toString(),
+        style: TextStyle(
+            color: _currentUserID == message.senderId
+                ? Colors.white
+                : Colors.black),
+      ),
+    );
   }
 
   @override
