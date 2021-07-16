@@ -36,9 +36,9 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   final TextEditingController _controller = TextEditingController();
   final _channel = IOWebSocketChannel.connect(
-    Uri.parse('wss://api.mahajodi.space/api/v1/chat/connect?user_id=181'),
-    pingInterval: Duration(microseconds: 1),
-  );
+      Uri.parse('wss://api.mahajodi.space/api/v1/chat/connect?user_id=181'),
+      pingInterval: Duration(microseconds: 1),
+      headers: {"Authorization": "Bearer header"});
 
   var _currentUserID = 181;
 
